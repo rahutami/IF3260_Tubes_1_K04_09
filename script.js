@@ -23,6 +23,7 @@ function main() {
     gl_FragColor = u_fragColor;
     }`
 
+    var state = {mode: "line"}
     var mouseClicked = false;
     var nearest = null;
     var objectArray = [];
@@ -180,11 +181,14 @@ function main() {
             const uniformPos = gl.getUniformLocation(this.shader, 'u_proj_mat');
             gl.uniformMatrix3fv(uniformPos, false, projectionMat);
 
-            if (this.vertices.length == 2) {
+            if (this.vertices.length == 4) {
+                console.log(this.vertices.length);
                 gl.drawArrays(gl.LINES, 0, this.vertices.length);
-            } else if (this.vertices.length == 3) {
+            } else if (this.vertices.length == 6) {
+                console.log(this.vertices.length);
                 gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length / 2);
             } else {
+                console.log(this.vertices.length);
                 gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.vertices.length / 2);
             }
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -193,7 +197,7 @@ function main() {
             const translateMat = makeTranslationMatrics(this.position[0], this.position[1]);
             const rotationMat = makeRotationXMat(this.rotation);
             const scaleMat = makeScaleMat(this.scale[0], this.scale[1]);
-            return multiplyMatrix(multiplyMatrix(rotationMat, scaleMat), translateMat);
+            return multiplyMatrix(multiplyMatrix(scaleMat, rotationMat), translateMat);
         }
     }
 
@@ -206,10 +210,9 @@ function main() {
             object.setPosition(0, 0);
             object.setRotation(0);
             object.setScale(1, 1);
-            object.bind();
-            object.draw();
             objectArray.push(object);
         });
+        drawObjects();
     }
 
     function parsingData(data) {
@@ -332,8 +335,30 @@ function main() {
         link.click()
     }
 
-    document.getElementById("save").onclick = function () { savefile() };
+    function scaleObject(value){
+        objectArray[objectArray.length-1].setScale(value, value)
+    }
 
+    function drawObjects(){
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(255, 255, 255, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        for (var obj of objectArray){
+            console.log(obj)
+            obj.bind();
+            obj.draw();
+        }
+    }
+
+    document.getElementById("save").onclick = function () { savefile() };
+    document.getElementById("scale-btn").onclick = function () { 
+        if(!objectArray.length) return
+        var inputValue = document.getElementById('scale').value
+        var value = parseFloat(inputValue ? inputValue : '1')
+        console.log(value);
+        scaleObject(value)
+        drawObjects()
+     };
 }
 
 main()
