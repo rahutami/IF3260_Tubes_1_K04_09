@@ -200,13 +200,24 @@ function main() {
             return multiplyMatrix(multiplyMatrix(scaleMat, rotationMat), translateMat);
         }
     }
-
+    function hexToRgbA(hex){
+        var c;
+        if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+            c= hex.substring(1).split('');
+            if(c.length== 3){
+                c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+            }
+            c= '0x'+c.join('');
+            return [((c>>16)&255)/255, ((c>>8)&255)/255, (c&255)/255,1];
+        }
+        throw new Error('Bad Hex');
+    }
     function render(datainput, shaderProgram, gl) {
         var arrayobj = parsingData(datainput);
         arrayobj.forEach(function (item, index) {
             const object = new geometryObject(index, shaderProgram, gl);
             object.setVertexArray(item.vertices);
-            object.setColors(item.vcolor);
+            object.setColors(hexToRgbA(document.getElementById("inputColor").value));
             object.setPosition(0, 0);
             object.setRotation(0);
             object.setScale(1, 1);
@@ -225,12 +236,8 @@ function main() {
             var vertex = lines[startline].split(",");
             for (var i = 0; i < vertex.length; i++) vertex[i] = parseFloat(vertex[i]);
             startline++;
-            var color = lines[startline].split(",");
-            for (var i = 0; i < color.length; i++) color[i] = parseFloat(color[i]);
-            startline++;
             var objglo = {
                 vertices: vertex,
-                vcolor: color
             }
             objArray.push(objglo);
         }
