@@ -150,7 +150,7 @@ function main() {
         setVertexArray(vertices) {
             this.vertices = vertices;
         }
-
+        
         bind() {
             const vertBuf = this.gl.createBuffer();
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertBuf);
