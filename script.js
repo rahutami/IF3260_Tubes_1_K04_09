@@ -23,10 +23,19 @@ function main() {
     gl_FragColor = u_fragColor;
     }`
 
-    var state = {mode: "line"}
+    var state = { 
+        mode: "line", 
+        drawing: false, 
+        origin_x: 0, 
+        origin_y: 0,
+        corner_count: 0,
+        vertices: []
+    }
     var mouseClicked = false;
     var nearest = null;
     var objectArray = [];
+    var mousex = 0;
+    var mousey = 0;
 
     const shaderProgram = initShaderProgram(gl, vertexShader, fragmentShader);
 
@@ -35,12 +44,40 @@ function main() {
 
             var fileReader = new FileReader();
             fileReader.onload = function () {
-                console.log(fileReader.result);
                 render(fileReader.result, shaderProgram, gl);
             }
 
             fileReader.readAsText(this.files[0]);
         });
+
+    document.querySelectorAll(".shape").forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.target.disabled = true
+
+            state.mode = e.target.id
+
+            document.querySelectorAll(".shape").forEach(btn => {
+                if (btn.id != state.mode) btn.disabled = false
+            })
+
+            if(state.mode === "polygon"){
+                document.getElementById('done-btn').disabled = false;
+            } else {
+                document.getElementById('done-btn').disabled = true;
+            }
+        })
+        if (button.id != state.mode) button.disabled = false;
+        else button.disabled = true;
+    });
+
+    document.getElementById('done-btn').addEventListener("click", function(event){
+        if(state.mode !== "polygon") return;
+        saveObject(state.vertices)
+        state.corner_count = 0
+        state.drawing = false
+        state.vertices = []
+        drawObjects()
+    })
 
     canvas.addEventListener("mousedown", function (event) {
         if (!mouseClicked) {
@@ -50,9 +87,52 @@ function main() {
             nearest = getNearestVertex(xPosition, yPosition);
             if (nearest != null) {
                 mouseClicked = true;
+            } else {
+                recordPosition(event);
+                state.drawing = true;
+                state.origin_x = mousex;
+                state.origin_y = mousey;
+                if(state.mode === "triangle" || state.mode === "polygon"){
+                    state.corner_count++
+                    state.vertices.push(state.origin_x, state.origin_y)
+                    if(state.corner_count === 3 && state.mode === "triangle"){
+                        saveObject(state.vertices)
+                        state.corner_count = 0
+                        state.drawing = false
+                        state.vertices = []
+                    }
+                }
             }
         }
     });
+
+    canvas.addEventListener('mousemove', function(event){
+        if(!state.drawing){
+            return;
+        }
+        recordPosition(event);
+        drawObjects();
+
+        var x1 = state.origin_x;
+        var y1 = state.origin_y;
+        var x2 = mousex;
+        var y2 = mousey;
+        var vertices = []
+        
+        if (state.mode === "square"){
+            x2 = x1 + (x2 > x1 ? Math.abs(y2 - y1) : (-1) * Math.abs(y2 - y1))
+            vertices = [x1, y1, x1, y2, x2, y1, x2, y2]
+        } else if (state.mode === "rectangle" ) {
+            vertices = [x1, y1, x1, y2, x2, y1, x2, y2]
+        } else if (state.mode === "line"){
+            vertices = [x1, y1, x2, y2]
+        } else {
+            vertices = [...state.vertices, x2, y2]
+        }
+
+        drawObject(vertices)
+    })
+
     canvas.addEventListener("mouseup", function (event) {
         if (mouseClicked) {
             var position = getMouseCoordinate(event),
@@ -70,6 +150,29 @@ function main() {
                 item.draw();
             });
             nearest = null;
+        } else if (state.drawing && !(state.mode === "triangle" || state.mode === "polygon")){
+            recordPosition(event);
+
+            var x1 = state.origin_x;
+            var y1 = state.origin_y;
+            var x2 = mousex;
+            var y2 = mousey;
+            var vertices = []
+            
+            if (state.mode === "square"){
+                x2 = x1 + (x2 > x1 ? Math.abs(y2 - y1) : (-1) * Math.abs(y2 - y1))
+                vertices = [x1, y1, x1, y2, x2, y1, x2, y2]
+            } else if (state.mode === "rectangle" ) {
+                vertices = [x1, y1, x1, y2, x2, y1, x2, y2]
+            } else if (state.mode === "line"){
+                vertices = [x1, y1, x2, y2]
+            } else {
+                vertices = [...state.vertices, x2, y2]
+            }
+
+            state.drawing = false;
+            saveObject(vertices)
+            drawObjects();
         }
     });
 
@@ -107,6 +210,31 @@ function main() {
         return shader;
     }
 
+    function recordPosition(e){
+        mousex = 2 * (e.offsetX / canvas.clientWidth) - 1
+        mousey = 2 * (1 - (e.offsetY / canvas.clientHeight)) - 1
+    }
+
+    function saveObject(vertices){
+        const object = new geometryObject(objectArray.length, shaderProgram, gl);
+        object.setVertexArray(vertices);
+        object.setColors(hexToRgbA(document.getElementById("inputColor").value));
+        object.setPosition(0, 0);
+        object.setRotation(0);
+        object.setScale(1, 1);
+        objectArray.push(object);
+    }
+
+    function drawObject(vertices){
+        const object = new geometryObject(objectArray.length, shaderProgram, gl);
+        object.setVertexArray(vertices);
+        object.setColors(hexToRgbA(document.getElementById("inputColor").value));
+        object.setPosition(0, 0);
+        object.setRotation(0);
+        object.setScale(1, 1);
+        object.bind();
+        object.draw();
+    }
     class geometryObject {
 
         constructor(id, shader, gl) {
@@ -182,13 +310,10 @@ function main() {
             gl.uniformMatrix3fv(uniformPos, false, projectionMat);
 
             if (this.vertices.length == 4) {
-                console.log(this.vertices.length);
                 gl.drawArrays(gl.LINES, 0, this.vertices.length);
             } else if (this.vertices.length == 6) {
-                console.log(this.vertices.length);
                 gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length / 2);
             } else {
-                console.log(this.vertices.length);
                 gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.vertices.length / 2);
             }
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -334,7 +459,6 @@ function main() {
             content += value.vertices.toString() + "\n";
             content += value.color.toString() + "\n";
         }
-        console.log(content);
         var link = document.createElement('a');
         link.download = 'model.txt';
         var blob = new Blob([content], { type: 'text/plain' });
@@ -351,7 +475,6 @@ function main() {
         gl.clearColor(255, 255, 255, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         for (var obj of objectArray){
-            console.log(obj)
             obj.bind();
             obj.draw();
         }
@@ -362,10 +485,16 @@ function main() {
         if(!objectArray.length) return
         var inputValue = document.getElementById('scale').value
         var value = parseFloat(inputValue ? inputValue : '1')
-        console.log(value);
         scaleObject(value)
         drawObjects()
      };
+
+    document.getElementById("clear").addEventListener("click", function(e){
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(255, 255, 255, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        objectArray = []
+    })
 }
 
 main()
