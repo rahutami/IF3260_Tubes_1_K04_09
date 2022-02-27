@@ -363,7 +363,14 @@ function main() {
             obj.draw();
         }
     }
+    const totalPoints=800;
 
+    for (let i = 0; i <= totalPoints; i++) {
+    const angle= 2 * Math.PI * i / totalPoints;
+    const x = startX + radius * Math.cos(angle);
+    const y = startY + radius * Math.sin(angle);
+    vertices.push(x, y);
+    }
     document.getElementById("save").onclick = function () { savefile() };
     document.getElementById("scale-btn").onclick = function () { 
         if(!objectArray.length) return
