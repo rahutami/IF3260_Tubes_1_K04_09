@@ -1,7 +1,7 @@
 function main() {
     const canvas = document.getElementById('canvas')
-    canvas.width = window.innerWidth * 0.8
-    canvas.height = window.innerHeight
+    canvas.height = window.innerHeight*0.8
+    canvas.width = canvas.height
     const gl = canvas.getContext('webgl2')
     if (!gl) {
         alert('WebGL is not supported on this browser/device')
@@ -342,7 +342,7 @@ function main() {
         arrayobj.forEach(function (item, index) {
             const object = new geometryObject(index, shaderProgram, gl);
             object.setVertexArray(item.vertices);
-            object.setColors(hexToRgbA(document.getElementById("inputColor").value));
+            object.setColors(item.vcolor);
             object.setPosition(0, 0);
             object.setRotation(0);
             object.setScale(1, 1);
@@ -361,8 +361,12 @@ function main() {
             var vertex = lines[startline].split(",");
             for (var i = 0; i < vertex.length; i++) vertex[i] = parseFloat(vertex[i]);
             startline++;
+            var color = lines[startline].split(",");
+            for (var i = 0; i < color.length; i++) color[i] = parseFloat(color[i]);
+            startline++;
             var objglo = {
                 vertices: vertex,
+                vcolor: color
             }
             objArray.push(objglo);
         }
