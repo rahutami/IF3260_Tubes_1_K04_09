@@ -1,6 +1,6 @@
 function main() {
     const canvas = document.getElementById('canvas')
-    canvas.height = window.innerHeight*0.8
+    canvas.height = window.innerHeight * 0.95
     canvas.width = canvas.height
     const gl = canvas.getContext('webgl2')
     if (!gl) {
@@ -85,22 +85,16 @@ function main() {
                 xPosition = position[0],
                 yPosition = position[1];
             nearest = getNearestVertex(xPosition, yPosition);
-            if (nearest != null) {
+            if (state.mode.indexOf("transform") > -1 && nearest != null) {
                 mouseClicked = true;
             } else {
                 recordPosition(event);
                 state.drawing = true;
                 state.origin_x = mousex;
                 state.origin_y = mousey;
-                if(state.mode === "triangle" || state.mode === "polygon"){
+                if(state.mode === "polygon"){
                     state.corner_count++
                     state.vertices.push(state.origin_x, state.origin_y)
-                    if(state.corner_count === 3 && state.mode === "triangle"){
-                        saveObject(state.vertices)
-                        state.corner_count = 0
-                        state.drawing = false
-                        state.vertices = []
-                    }
                 }
             }
         }
@@ -138,19 +132,32 @@ function main() {
             var position = getMouseCoordinate(event),
                 xPosition = position[0],
                 yPosition = position[1];
-
+            
             var objectID = nearest[0],
                 vertexID = nearest[1];
-            objectArray[objectID].setVerticesByID(vertexID, xPosition, yPosition);
+
+            if(state.mode === "transform-vertex"){
+                objectArray[objectID].setVerticesByID(vertexID, xPosition, yPosition);
+            } else {
+                var vertices = objectArray[objectID].getVertices();
+                var [currX, currY] = objectArray[objectID].getVerticesById(vertexID);
+                console.log(xPosition, yPosition)
+                for(var i = 0; i < vertices.length; i+=2){
+                    if(vertices[i] === currX && vertices[i+1] === currY){
+                        objectArray[objectID].setVerticesByID(i, xPosition, yPosition);
+                    } else if (vertices[i] === currX){
+                        objectArray[objectID].setVerticesByID(i, xPosition, vertices[i+1]);
+                    } else if (vertices[i+1] === currY){
+                        objectArray[objectID].setVerticesByID(i, vertices[i], yPosition);
+                    }
+                    console.log(objectArray[objectID].getVertices())
+                }
+            }
 
             mouseClicked = false;
-
-            objectArray.forEach(function (item) {
-                item.bind();
-                item.draw();
-            });
+            drawObjects()
             nearest = null;
-        } else if (state.drawing && !(state.mode === "triangle" || state.mode === "polygon")){
+        } else if (state.drawing && !(state.mode === "polygon")){
             recordPosition(event);
 
             var x1 = state.origin_x;
@@ -255,6 +262,9 @@ function main() {
         }
         getVertices() {
             return this.vertices;
+        }
+        getVerticesById(vertexId) {
+            return [this.vertices[vertexId], this.vertices[vertexId+1]];
         }
         getColor() {
             return this.color;
@@ -485,13 +495,6 @@ function main() {
     }
 
     document.getElementById("save").onclick = function () { savefile() };
-    document.getElementById("scale-btn").onclick = function () { 
-        if(!objectArray.length) return
-        var inputValue = document.getElementById('scale').value
-        var value = parseFloat(inputValue ? inputValue : '1')
-        scaleObject(value)
-        drawObjects()
-     };
 
     document.getElementById("clear").addEventListener("click", function(e){
         gl.viewport(0, 0, canvas.width, canvas.height);

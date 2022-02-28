@@ -57,32 +57,46 @@
         text-decoration: none;
         cursor: pointer;
       }
+
+      .container{
+        display: flex;
+        justify-content: space-around;
+        width: 80%;
+        margin: auto;
+      }
     </style>
   </head>
 
   <body>
-    <input type="file" id="inputFile" />
-    <br>
-    <button id="line" class="shape">Line</button>
-    <button id="triangle" class="shape">Triangle</button>
-    <button id="rectangle" class="shape">Rectangle</button>
-    <button id="square" class="shape">Square</button>
-    <button id="polygon" class="shape">Polygon</button>
-    <button id="done-btn" disabled>Done</button>
-    <input type="color" id="inputColor" />
-    <br>
-    <br>
-    <button id="clear">Clear Canvas</button>
-    <br>
-    <br>
-    <button id="save">Save</button>
-    <button id="help">Help</button>
-    <label for="scale" wi>Scale</label>
-    <input type="number" name="scale" id="scale" min="-5" max="5">
-    <button id="scale-btn">Scale</button>
-    <br><br>
-    <canvas id="canvas" style="border: 1px solid black;display: block; margin: 0;"></canvas>
+    <div class="container">
+      <div class="canvas-container">
+        <canvas id="canvas" style="border: 1px solid black;display: block; margin: 0;"></canvas>
+      </div>
+      <div class="control-container">
+        <input type="file" id="inputFile" />
+        <br>
+        <h3>Choose Shape</h3>
+        <button id="line" class="shape">Line</button>
+        <button id="rectangle" class="shape">Rectangle</button>
+        <button id="square" class="shape">Square</button>
+        <button id="polygon" class="shape">Polygon</button>
+        <button id="done-btn" disabled>Done</button>
+        <h3>Change Color</h3>
+        <input type="color" id="inputColor" />
+        <h3>Transform</h3>
+        <button id="transform-vertex" class="shape">Ubah Letak Sudut</button>
+        <button id="transform-sides" class="shape">Ubah Panjang Sisi</button>
+        <br>
+        <br>
+        <button id="clear">Clear Canvas</button>
+        <br>
+        <br>
+        <button id="save">Save</button>
+        <button id="help">Help</button>
+        <br><br>
+      </div>
     </div>
+    
     <!-- Help Box -->
     <div id="helpBox" class="modal">
       <!-- Help Box Content -->
@@ -97,8 +111,8 @@
           </ol>
         <li>Setelah shape terbentuk, dapat dilakukan hal-hal berikut untuk shape yang terakhir dibuat:</li>
         <ol>
-          <li>Melakukan drag&drop pada simpul dengan menarik sudut-sudut shape</li>
-          <li>Melakukan scale dengan memasukkan nilai scale di input</li>
+          <li>Melakukan drag&drop pada simpul dengan memilih tombol "Ubah letak sudut" dan menarik sudut-sudut shape</li>
+          <li>Mengubah panjang sisi shape rectangle dan square dengan memilih tombol "Ubah letak sudut" dan menarik sudut-sudut shape</li>
         </ol>
         <li>Proyek dapat disimpan dengan klik tombol <strong>Save</strong> button. File akan terunduh secara otomatis</li>
         <li>Klik tombol <strong>Help</strong> untuk membuka <strong>Help Box</strong></li>
